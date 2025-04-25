@@ -1,0 +1,45 @@
+const serverResponseMessage = {
+  /* User */
+  USER_CREATED: "User Created Succesfully",
+  USER_UPDATED: "User Updated Succesfully",
+  USER_FETCH: "User Data Fetched Succesfully",
+  TOKEN_CREATED: "Token Created Successfully",
+  USER_DELETED_SUCCESSFULLY: "User Deleted Successfully",
+
+
+  /* Group */
+  GROUP_CREATED: "Group Created Succesfully",
+  GROUP_ALREADY_CREATED: "Group Alreeady Created With Same Name",
+  GROUP_DELETE: "Group Deleted Succesfully",
+  GROUP_FETCH: "Group Data Fetched Succesfully",
+  FAILURE_DATA_CREATE: "Failure to Create Record",
+  FAILURE_DATA_UPDATE: "Failure to Update Record",
+  FAILURE_DATA_GET: "Failure to Get Record",
+  ATLEAST_TWO_MEMBERS_REQUIRED:
+    "Atleast 2 Group Member is Required to Create a Group",
+  Group_list: "Chat group list",
+  GROUP_DOES_NOT_EXIST: "Group could not be found",
+
+  GROUP_NOT_PRESENT: "Any Record is Not Matching with Requested Group Name!",
+  ATMOST_TWO_MEMBERS_ALLOWED: "Onetoone group can not contain more than two members",
+
+  /* Catch Error */
+  Catch_Error: "Please Recitify the Error",
+  DATA_READ_ERROR: "Please Request with Proper Data",
+
+
+  /* CHAT */
+  CHAT_CLEAR: "All Chat has been Clear",
+  SELECTED_IMAGES_DELETED: "Selected Images Deleted Successfully",
+  ALL_IMAGES_FETCHED: "All Images Fetched Successfully",
+  GROUP_CHAT_MESSAGE: "Chat Messages Has Been Fetched Successfully",
+  SELECT_FILE: "Please Select a File",
+  FILE_SENT_SUCCESSFULLY: "File Sent Successfully",
+
+  /* Error */
+  ERROR: "Please Rectify the Error",
+
+
+};
+
+module.exports = { serverResponseMessage };
