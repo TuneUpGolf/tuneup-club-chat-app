@@ -1,0 +1,130 @@
+const { ObjectId } = require("mongoose").Types;
+
+const { User } = require("@models/index.js");
+RegExp.escape = function (s) {
+  return s.replace(/[\\^$*+?.()|[\]{}-]/g, "\\$&");
+};
+
+exports.userCreate = async (req) => {
+  try {
+    return await User.create(req);
+  } catch (error) {
+    console.log(error)
+    throw new Error(error);
+  }
+};
+
+exports.userUpdate = async (req, Id) => {
+  try {
+    const id = Id || req._id;
+    const query = {};
+    if (req?.uuid) {
+      query.uuid = req?.uuid;
+    } else {
+      query._id = ObjectId(id);
+    }
+    return await User.findOneAndUpdate(
+      query,
+      { $set: { ...req } },
+      { new: true }
+    ).lean();
+  } catch (error) {
+    console.log(/er/, error);
+
+    throw new Error(error);
+  }
+};
+
+exports.userData = async (input) => {
+  try {
+    return await User.findOne(input).lean();
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+
+exports.userIdData = async (userId) => {
+  try {
+    return await User.findOne({ userId }).select({ full_name: 1 });
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+// Service to delete user by userId
+exports.deleteUserById = async (userId) => {
+  return await User.deleteOne({ userId });
+};
+
+
+exports.userAll = async (groupMembers) => {
+  try {
+    return await User.find({ userId: { $nin: groupMembers } }).sort({ full_name: 1 });;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+exports.userFind = async (req) => {
+  try {
+    return await User.findOne(req);
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+exports.updateUserDetailOnUserId = async (userId, req) => {
+  try {
+    return await User.findOneAndUpdate(
+      {
+        userId,
+      },
+      { $set: { ...req } },
+      { new: true }
+    ).lean();
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+
+
+exports.updateUserStatus = async (userId) => {
+  try {
+    return await User.findOneAndUpdate(
+      {
+        userId,
+        user_status: "0",
+      },
+      {
+        $set: { user_status: "1" },
+      },
+      {
+        new: true,
+      }
+    );
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+exports.changeUserStatus = async (userId) => {
+  try {
+    return await User.findOneAndUpdate(
+      {
+        userId,
+        user_status: "1",
+      },
+      {
+        $set: { user_status: "0" },
+      },
+      {
+        new: true,
+      }
+    );
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
