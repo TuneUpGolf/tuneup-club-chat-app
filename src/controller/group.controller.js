@@ -28,9 +28,7 @@ const sharp = require('sharp')
  */
 exports.createGroupController = async (req, res) => {
   try {
-    const { groupName } = req.body;
 
-    const groupSlug = slugify(groupName, { lower: true });
     if (req.body.groupMembers.length > 2 && req.body.type === user_constants.ONETOONE) {
       return failure(res, 400, serverResponseMessage.ATMOST_TWO_MEMBERS_ALLOWED);
     }
@@ -55,7 +53,7 @@ exports.createGroupController = async (req, res) => {
       );
     }
     // Create the new group
-    const grpCreateRes = await groupCreate({ ...req.body, groupSlug });
+    const grpCreateRes = await groupCreate({ ...req.body });
     // Get user data for the added members
     const addedUsersData = await groupDetailsBasedOnId(grpCreateRes._id);
     // Update addedUsers with current timestamp
@@ -75,6 +73,8 @@ exports.createGroupController = async (req, res) => {
       addedUsersData
     );
   } catch (error) {
+    console.log(/er/, error);
+
     logger.error(
       `[createGroupController] [Error] while creating group => ${error}`
     );
@@ -134,6 +134,8 @@ exports.getGroupController = async (req, res) => {
       );
     }
   } catch (error) {
+    console.log(/er/, error);
+
     logger.error(
       `[getGroupController] [Error] while fetching group => ${error}`
     );
@@ -145,9 +147,6 @@ exports.getGroupController = async (req, res) => {
     );
   }
 };
-
-
-
 
 
 /**
@@ -167,13 +166,11 @@ exports.deleteGroupController = async (req, res) => {
       const findImagesChat = await findAllImagesInChat(grpDeleteRes.groupName);
       if (findImagesChat.length) {
         // Delete multiple images
-        await aws.deleteMultipleImages(findImagesChat[0].imagesKeys);
+        // await aws.deleteMultipleImages(findImagesChat[0].imagesKeys);
       }
       // Clear chat messages
       await clearChatMessages(grpDeleteRes.groupName);
-      const onlineAdmins = await getAllOnlineAdmins();
       global.globalSocket.to(groupResponse?.groupMembers).emit(socket_constant.DELETE_GROUP, grpDeleteRes);
-      global.globalSocket.to(onlineAdmins).emit(socket_constant.DELETE_GROUP, grpDeleteRes);
       if (grpDeleteRes) {
         return success(
           res,

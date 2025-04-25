@@ -4,9 +4,7 @@ module.exports = (mongoose) => {
       groupName: {
         type: String,
       },
-      groupSlug: {
-        type: String,
-      },
+      
       groupMembers: {
         type: Array,
       },

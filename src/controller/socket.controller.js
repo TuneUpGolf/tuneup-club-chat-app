@@ -204,7 +204,7 @@ exports.chatMessage = ({
           // Iterate through online users and add those who are group members to 'readUserIds'
           // Mark the message as read only by online group members (and online admins).
           const readUserIds = onlineUsers.filter((ids) =>
-            groups.groupMembers.includes(ids) || onlineAdmins.includes(ids)
+            groups.groupMembers.includes(ids)
           );
           // Create a 'messageData' object with various message details
           //Build a message object with all required metadata.

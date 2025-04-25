@@ -1,11 +1,9 @@
 const joi = require('joi');
 
 exports.createGroup = joi.object({
-    groupName: joi.string().required(),
     groupMembers: joi.array().items(joi.string()).required(),
     senderId: joi.string().required(),
     type: joi.string().required(),
-    adminMembers: joi.array().items(joi.string()).optional(),
     profile_img: joi.string().optional(),
     isGuest: joi.boolean().optional(),
 })

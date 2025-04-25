@@ -4,6 +4,7 @@ const serverResponseMessage = {
   USER_UPDATED: "User Updated Succesfully",
   USER_FETCH: "User Data Fetched Succesfully",
   TOKEN_CREATED: "Token Created Successfully",
+  USER_DELETED_SUCCESSFULLY: "User Deleted Successfully",
 
 
   /* Group */
