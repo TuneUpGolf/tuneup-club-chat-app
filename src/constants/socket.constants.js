@@ -33,6 +33,7 @@ const socket_constant = {
   CHAT_REACTION_REMOVE: 'chatReactionRemove',
   ONLINE_USER_UPDATE: "updateOnlineUser",
   LEAVE_ROOM: "leaveRoom",
+  NOTIFY_UNREAD_GLOBAL_COUNT: "Notify unread global count",
 
   DELETE_MESSAGE: "messageDeleted"
 };

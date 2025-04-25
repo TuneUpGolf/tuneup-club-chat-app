@@ -21,31 +21,12 @@ This project was bootstrapped with Vme project.
     - `JWT_SECRET=XXXX` (JWT Secret - any random string)
     - `JWT_EXPIRE=XXXXXX` (such as 1d for 1 day)
 
-    - `AWS_ACCESS_KEY_ID=XXXXX`
-    - `AWS_SECRET_ACCESS_KEY=XXXXX`
-    - `AWS_REGION=XXXXX`
-    - `S3_BUCKET=XXXX` 
-    - `S3_FOLDER=XXXX`
+  
 
     - `REDIS_HOST=XXXXXX`
     - `REDIS_PORT=XXXX`
     - `REDIS_PASSWORD=XXXX`
 
-    - `API_RATE_LIMIT=XXXX` (Api rate limit for public api such as 30 )
-    - `REQUEST_LIMIT_TIME=XXXX` (Time limit for Chat request to salesPerson, 2 for 2 minutes)
-    - `FILE_SIZE=XXXX` (file size limit in bytes)
-
-    - `FIREBASE_TYPE=XXXX` 
-    - `FIREBASE_PROJECT_ID=XXXX`
-    - `FIREBASE_PRIVATE_KEY_ID=XXXX`
-    - `FIREBASE_CLIENT_EMAIL=XXXX`
-    - `FIREBASE_PRIVATE_KEY=XXXX`
-    - `FIREBASE_CLIENT_ID=XXXX`
-    - `FIREBASE_AUTH_URI=XXXX`
-    - `FIREBASE_TOKEN_URI=XXXX`
-    - `FIREBASE_AUTH_PROVIDER_X509_CERT_URL=XXXX`
-    - `FIREBASE_CLIENT_X509_CERT_URL=XXXX`
-    - `FIREBASE_UNIVERSE_DOMAIN=XXXX`
 
 ### Folder Structure and Explanation of Each Folder
 

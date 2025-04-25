@@ -32,7 +32,11 @@ exports.allImages = joi.object({
 exports.deleteMultipleImage = joi.object({
   imagesKeys: joi.array().required(),
 });
-
+exports.uploadImage = joi.object({
+  groupId: joi.string().hex().length(24).required(),
+  userId: joi.string().optional(),
+  senderId: joi.string().optional(),
+})
 
 
 exports.removeMessage = joi.object({
