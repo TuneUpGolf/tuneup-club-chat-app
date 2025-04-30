@@ -26,6 +26,7 @@ const serverResponseMessage = {
   /* Catch Error */
   Catch_Error: "Please Recitify the Error",
   DATA_READ_ERROR: "Please Request with Proper Data",
+  INTERNAL_SERVER_ERROR: " Internal Server Error",
 
 
   /* CHAT */
@@ -35,6 +36,8 @@ const serverResponseMessage = {
   GROUP_CHAT_MESSAGE: "Chat Messages Has Been Fetched Successfully",
   SELECT_FILE: "Please Select a File",
   FILE_SENT_SUCCESSFULLY: "File Sent Successfully",
+  MESSAGE_DELETED: "Message Deleted Successfully",
+  MESSAGE_NOT_FOUND_IN_CHAT: "Message Not Found in Chat",
 
   /* Error */
   ERROR: "Please Rectify the Error",

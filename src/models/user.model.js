@@ -48,6 +48,10 @@ module.exports = (mongoose) => {
       type: {
         type: String,
       },
+      last_seen: {
+        type: Date,
+        default: "",
+      },
       created_at: {
         type: Date,
         default: Date.now,

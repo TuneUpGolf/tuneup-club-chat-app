@@ -17,6 +17,7 @@ const socket_constant = {
   NOTIFY_UNREAD_GLOBAL: "notifyUnreadGlobal",
   TYPING_MESSAGE: "IsTyping",
   NOTIFY_USER_READ: "notifyUserRead",
+  WARNING: "DonotUseAbuseWords",
 
   NEW_GROUP_CREATE: "newGroupCreated",
 

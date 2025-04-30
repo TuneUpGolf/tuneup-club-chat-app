@@ -384,10 +384,9 @@ exports.listGroups = async ({ userId, page, perPage, groupName, type, isFilter, 
           ),
           ...({ type: { $in: type } }),
 
-          groupName: {
-            $regex: groupName,
-            $options: "i",
-          },
+          // Add condition for groupName if it's not an empty string
+          ...(groupName && { groupName: { $regex: groupName, $options: 'i' } }),
+
           isDeleted: false,
         },
       },

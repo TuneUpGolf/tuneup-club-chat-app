@@ -1,11 +1,10 @@
 const moment = require("moment");
 const { success, failure } = require("@utils/response");
-const { serverResponseMessage, user_constants } = require("@constants/index");
+const { user_constants } = require("@constants/index");
 const { Chat } = require("@models/index");
 const { Group } = require("@models/index");
 const group_name = "$groupName";
 const mongoose = require('mongoose');
-const { redisClient } = require("@root/config/redis.config");
 
 
 exports.chatList = async (whereArr, perPage, page) => {
@@ -517,21 +516,33 @@ exports.renderMessage = async (message, chatPerPage) => {
   }
 }
 
-exports.softDeleteMessage = async (id, userId) => {
+exports.softDeleteMessages = async (messageIds, userId) => {
   try {
-    return await Chat.findOneAndUpdate(
+    const updateResult = await Chat.updateMany(
       {
-        _id: id,
+        _id: { $in: messageIds },
         senderId: userId,
         isDeleted: false
-      }, {
+      },
+      { $set: { isDeleted: true } }
+    );
+
+    if (updateResult.modifiedCount === 0) {
+      // No message actually deleted
+      return [];
+    }
+
+    // Fetch updated/deleted documents
+    return await Chat.find({
+      _id: { $in: messageIds },
+      senderId: userId,
       isDeleted: true
-    }, { new: true }
-    )
+    });
   } catch (error) {
-    throw new Error(error)
+    throw new Error(error);
   }
-}
+};
+
 
 exports.getMessagesList = async (input) => {
   try {
@@ -541,31 +552,3 @@ exports.getMessagesList = async (input) => {
   }
 }
 
-exports.softDeleteMultipleMessage = async (ids, userId, onlyForMe) => {
-  try {
-    const updateQuery = onlyForMe
-      ? { $pull: { sendTo: userId } }
-      : {
-        $set: {
-          message: serverResponseMessage.THIS_MESSAGE_WAS_DELETED,
-          isDeleted: true
-        }
-      };
-
-    const matchQuery = onlyForMe
-      ? {
-        _id: { $in: ids },
-      } :
-      {
-        _id: { $in: ids },
-        senderId: userId
-      }
-    return await Chat.updateMany(
-      matchQuery,
-      updateQuery,
-      { new: true }
-    )
-  } catch (error) {
-    throw new Error(error);
-  }
-};

@@ -12,7 +12,7 @@ const {
   findAllImagesInChat,
   allImagesInChat,
   chatFoundPerPage,
-  softDeleteMessage,
+  softDeleteMessages,
 
 } = require("@services/chat.services");
 const { Group, User } = require("@models/index");
@@ -22,7 +22,6 @@ const mongoose = require('mongoose')
 const {
   handleUpload
 } = require("@controller/socket.controller");
-const { getAllOnlineAdmins } = require("../utils/common.utils");
 const { redisClient } = require("@root/config/redis.config");
 
 /**
@@ -37,7 +36,8 @@ const { redisClient } = require("@root/config/redis.config");
  */
 exports.chatListController = async (req, res, next) => {
   try {
-    const { groupId, userId, page = 0, perPage, message, userType } = req.body;
+    const { groupId, page = 0, perPage, message, userType } = req.body;
+    const { userId } = req.user
     const chatPerPage = perPage ? parseInt(perPage, 10) : 20;
     const { user_type } = req;
     // Update whereArr to include search criteria for messages
@@ -56,11 +56,15 @@ exports.chatListController = async (req, res, next) => {
       whereArr.isTerminated = false;
     }
     const response = await chatList(whereArr, chatPerPage, Math.max(1, page));
+    console.log(/response/, response);
+
     if (message && response[0].data.length) {
       const messageFoundPage = await chatFoundPerPage(whereArr, user_type, userId, chatPerPage)
 
       response[0].messageFoundPage = messageFoundPage
     }
+    console.log(/response12/, response);
+
     return success(
       res,
       200,
@@ -98,6 +102,7 @@ exports.newChatGroupListController = async (req, res, next) => {
   try {
     const { page, isFilter } = req.body;
     const { userId } = req.user;
+    console.log(userId)
     let { type, perPage, groupName } = req.body;
     const { user_type } = req;
     let totalCount = 0;
@@ -123,9 +128,13 @@ exports.newChatGroupListController = async (req, res, next) => {
     let data = [];
     if (perPage > 0) {
       const result = await listGroups({ userId, page, perPage, groupName, type, isFilter, user_type });
+      console.log(/result/, result);
+
       data = result.data || [];
       totalCount += result.totalCount ?? 0;
     }
+    console.log(/dta/, data);
+
     for (const item of data) {
       response.push(item);
     }
@@ -262,29 +271,45 @@ exports.allImageController = async (req, res, next) => {
  */
 
 
+// Controller: removeMessage
 exports.removeMessage = async (req, res) => {
   try {
-    const { _id, userId } = req.body
-    const removeMessage = await softDeleteMessage(_id, userId)
+    const { messageIds, _id, userId } = req.body;
 
-    if (removeMessage) {
-      const data = {
-        messageId: removeMessage._id.toString(),
-        groupId: removeMessage.groupId.toString()
-      }
-      global.globalSocket.to(removeMessage.groupId.toString()).emit(socket_constant.DELETE_MESSAGE, data);
-      return success(
-        res,
-        200,
-        serverResponseMessage.MESSAGE_DELETED,
-        removeMessage._id
-      );
-    } else {
+    const idsToDelete = messageIds || (_id ? [_id] : []);
+
+    if (idsToDelete.length === 0) {
+      return failure(res, 400, "No messageIds or _id provided");
+    }
+
+    const removedMessages = await softDeleteMessages(idsToDelete, userId);
+
+    console.log("/removedMessages/", removedMessages);
+
+    if (!removedMessages || removedMessages.length === 0) {
       return failure(res, 404, serverResponseMessage.MESSAGE_NOT_FOUND_IN_CHAT);
     }
+
+    // Emit socket event for each deleted message
+    removedMessages.forEach((message) => {
+      const data = {
+        messageId: message._id.toString(),
+        groupId: message.groupId.toString()
+      };
+      global.globalSocket.to(message.groupId.toString()).emit(socket_constant.DELETE_MESSAGE, data);
+    });
+
+    return success(
+      res,
+      200,
+      serverResponseMessage.MESSAGE_DELETED,
+      removedMessages.map(msg => msg._id)
+    );
   } catch (error) {
+    console.log("/er/", error);
+
     logger.error(
-      `[removeMessage] [Error] while removing chat message => ${error.message}`
+      `[removeMessage] [Error] while removing chat messages => ${error.message}`
     );
     return failure(
       res,
@@ -293,7 +318,9 @@ exports.removeMessage = async (req, res) => {
       error.message
     );
   }
-}
+};
+
+
 
 
 /**

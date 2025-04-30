@@ -17,10 +17,10 @@ const { handleFileUpload } = require('@middleware/upload.middleware');
 module.exports = () => {
 
   router.post('/list', auth(true), middleware(chatValidator.chatList), chatListController);
-  router.post('/erase', auth(), middleware(chatValidator.clearChat), clearChatController);
-  router.post('/all-images', auth(true), middleware(chatValidator.allImages), allImageController);
   router.post('/all-group-list', auth(true), middleware(chatValidator.userList), newChatGroupListController);
   router.delete("/delete-message", auth(true), middleware(chatValidator.removeMessage), removeMessage)
+  router.post('/erase', auth(true), middleware(chatValidator.clearChat), clearChatController);
+  router.post('/all-images', auth(true), middleware(chatValidator.allImages), allImageController);
   router.post('/image', handleFileUpload(upload), auth(true), middleware(chatValidator.uploadImage), uploadImageController);   // media, recodings
 
 

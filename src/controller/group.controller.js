@@ -15,8 +15,7 @@ const {
   findAllImagesInChat,
 } = require("@services/chat.services");
 const logger = require("@utils/logger.utils");
-const slugify = require("slugify");
-const { getAllOnlineAdmins } = require("../utils/common.utils");
+
 const sharp = require('sharp')
 
 /**
