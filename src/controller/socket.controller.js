@@ -624,94 +624,6 @@ const notifyUnreadCountUser = ({
   }
 };
 
-exports.fileNotify = (socket, data, groupId, socketUsers) => {
-  try {
-    // Extract the filename from the provided 'data'
-    const filename = path.basename(data.name) ? path.basename(data.name) : null;
-
-    // Find the group based on its name and sort it by createdAt in descending order
-    Group.findOne({ _id: groupId })
-      .sort({ createdAt: -1 })
-      .then((groups) => {
-        // Get a list of online users in the group, including the sender
-        const onlineUsers = getOnlineUsers(groupId, data.senderId);
-        onlineUsers.push(data.senderId);
-        // Define the message as "File Attached" or use the message from 'data'
-        const msg = data.message || "File Attached";
-        const readUserIds = [];
-
-        // Iterate through online users and find those who are group members
-        onlineUsers.forEach((ids) => {
-          if (groups.groupMembers.includes(ids)) {
-            readUserIds.push(ids);
-          }
-        });
-
-        // Create a new chat message object for the uploaded file
-        const chatMessage = new Chat({
-          groupId: groups._id,
-          message: msg,
-          fileType: path.extname(filename),
-          isFile: true,
-          filePath: "temp/",
-          fileName: filename,
-          groupName: groups.groupName,
-          sendTo: groups.groupMembers,
-          senderId: data.senderId,
-          type: data.type,
-          readUserIds,
-        });
-
-        // Check if the message type is 'group' or 'onetoone' with the sender
-        if (
-          data.type === user_constants.GROUP ||
-          (data.type === user_constants.ONETOONE &&
-            groups.groupMembers.includes(data.senderId))
-        ) {
-          // Save the chat message for the uploaded file
-          chatMessage.save();
-
-          // Add the 'userName' to the chat message data
-          chatMessage._doc.userName = data.userName;
-
-          // Get the platform information from 'data'
-          const platform = data.plateform;
-
-          // If the platform is 'web', log the file upload and initiate AWS file upload
-          if (platform === "web") {
-            logs.fileUploadLog(groupId, data.senderId, filename);
-
-            // Initiate AWS file upload and handle the result (not shown here)
-            aws
-              .fileUpload(chatMessage.fileName, groups.groupName)
-              .then((finalRes) => { });
-          }
-
-          // Update the group's chat message data
-          groupChatMessageUpdateFind(groups._id, msg);
-
-          // Broadcast the chat message to all users in the group
-          socket.broadcast
-            .in(groupId)
-            .emit(socket_constant.RECEIVED, chatMessage);
-          socket.emit(socket_constant.RECEIVED, chatMessage);
-          // Notify unread messages to group members
-          notifyUnreadAllGroup(groups, {
-            senderId: data.senderId,
-            socketUsers,
-            onlineUsers,
-            socket,
-            msg,
-            userName: data.userName,
-            type: data.type,
-            messageData: chatMessage
-          });
-        }
-      });
-  } catch (error) {
-    socket.emit(socket_constant.SOMETHING_WENT_WRONG, error);
-  }
-};
 
 const getUnreadCountByUser = async ({
   userId,
@@ -887,8 +799,6 @@ const notifyUpload = async (socket, data, updatedFileName) => {
           // Update the group's chat message data
           groupChatMessageUpdateFind(groups._id, msg);
 
-          //Funtion for sending push notification
-          prepareAndSendPushNotification({ senderId: data.senderId, groups, readUserIds, type: data.type, msg, messageData: chatMessage });
 
           // Broadcast the chat message to all users in the group
           socket

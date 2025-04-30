@@ -341,6 +341,9 @@ exports.uploadImageController = async (req, res, next) => {
       );
     }
     const group = await Group.findById(req.body.groupId);
+    if (!group) {
+      return failure(res, 404, "Group not found");
+    }
     const obj = {};
     for (const a of group.groupMembers) {
       obj[a] = true;
@@ -365,6 +368,8 @@ exports.uploadImageController = async (req, res, next) => {
     );
 
   } catch (error) {
+    console.log(/er/, error);
+
     logger.error(
       `[uploadImage] [Error] while uploading image => ${error.message}`
     );
