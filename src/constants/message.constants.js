@@ -22,6 +22,7 @@ const serverResponseMessage = {
 
   GROUP_NOT_PRESENT: "Any Record is Not Matching with Requested Group Name!",
   ATMOST_TWO_MEMBERS_ALLOWED: "Onetoone group can not contain more than two members",
+  INVALID_GROUP_MEMBERS: "One or more group members are invalid users",
 
   /* Catch Error */
   Catch_Error: "Please Recitify the Error",

@@ -2,7 +2,7 @@ const joi = require('joi');
 
 exports.createGroup = joi.object({
     groupMembers: joi.array().items(joi.string()).required(),
-    senderId: joi.string().required(),
+    // senderId: joi.string().required(),
     type: joi.string().required(),
     profile_img: joi.string().optional(),
     isGuest: joi.boolean().optional(),

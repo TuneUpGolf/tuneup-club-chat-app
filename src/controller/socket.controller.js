@@ -458,6 +458,7 @@ exports.handleUpload = async (socket, data) => {
 
 
 
+
 function removeUserFromRoom (userId) {
   for (const key in users) {
     if (key.startsWith(userId + "_")) {

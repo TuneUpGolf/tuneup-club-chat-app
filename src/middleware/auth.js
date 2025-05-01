@@ -7,7 +7,7 @@ const { userFind } = require("@services/user.services");
  * 
  * @param {boolean} isReq - Indicates whether to include the user ID in the request body.
  * @returns {Function} - Middleware function to handle JWT verification.
- */
+//  */
 const verifyJWT = (isReq = false) => {
   return (req, res, next) => {
     const token = req.headers["authorization"];
@@ -44,5 +44,7 @@ const verifyJWT = (isReq = false) => {
     return null
   };
 };
+
+
 
 module.exports = verifyJWT;

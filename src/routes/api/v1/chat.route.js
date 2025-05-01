@@ -23,6 +23,6 @@ module.exports = () => {
   router.post('/all-images', auth(true), middleware(chatValidator.allImages), allImageController);
   router.post('/image', handleFileUpload(upload), auth(true), middleware(chatValidator.uploadImage), uploadImageController);   // media, recodings
 
-
+  
   return router;
 };

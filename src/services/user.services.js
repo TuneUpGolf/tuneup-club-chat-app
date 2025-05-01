@@ -129,3 +129,11 @@ exports.changeUserStatus = async (userId) => {
 }
 
 
+exports.checkValidGroupMembers = async (memberIds) => {
+  try {
+    return await User.find({ userId: { $in: memberIds } });
+  } catch (error) {
+    logger.error(`[checkValidGroupMembers] Failed to validate group members: ${error}`);
+    throw new Error(error);
+  }
+};
