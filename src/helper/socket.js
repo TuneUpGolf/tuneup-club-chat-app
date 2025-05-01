@@ -7,6 +7,7 @@ const logger = require("@utils/logger.utils");
 const {
   chatReaction,
 } = require("@controller/socket.controller");
+const verifyJWT = require("../middleware/socket.auth.middlware");
 
 /**
  * Handles the socket connections and events related to chat functionality.
@@ -14,7 +15,7 @@ const {
  * @param {Object} socket - The socket connection object.
  */
 module.exports = function (socket) {
-  // socket.use(verifyJWT);
+  socket.use(verifyJWT);
   console.log("Socket connection established");
 
   /* socket connection establishing */

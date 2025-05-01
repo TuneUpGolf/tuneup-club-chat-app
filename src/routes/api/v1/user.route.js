@@ -14,9 +14,9 @@ const {
 module.exports = () => {
 
   router.post('/create', middleware(userValidator.createUser), createUserController);
-  router.patch('/update', auth(true), middleware(userValidator.updateUser), updateUserController);
-  router.post('/get-profile', auth(true), middleware(userValidator.getUser), profileUserController);
+  router.patch('/update', auth(), middleware(userValidator.updateUser), updateUserController);
+  router.post('/get-profile', auth(), middleware(userValidator.getUser), profileUserController);
   router.post('/token', getUserJwtController);
-  router.post('/delete', auth(true), middleware(userValidator.deleteUser), deleteUserController);
+  router.post('/delete', auth(), middleware(userValidator.deleteUser), deleteUserController);
   return router;
 };

@@ -10,29 +10,36 @@ const { userFind } = require("@services/user.services");
  * @returns {null} - Returns null.
  * @throws {Error} - Throws an error if authentication fails.
  */
+
 const verifyJWT = async (socket, next) => {
   try {
-    const {token, isGuest} = socket.handshake.query;
-    // Check if isGuest is true, proceed without token verification
-    if(isGuest?.toString() ==='true'){
-      next();   // Continue to the next middleware or route handler
-    }else{
-      if (!token) {
-        return next(new Error("Unauthorized"));
-      }
-      const decoded = jwt.verify(token, config.secret);
-      const { uuid } = decoded;
-      const userResponse = await userFind({ uuid });
-      if (!userResponse) {
-        return next(new Error("Unauthorized"));
-      }
-      socket.userId = userResponse.userId;
-      next();
+    const authHeader = socket.handshake.headers?.authorization;
+    console.log("/auth/", authHeader);
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return next(new Error("Unauthorized: No token provided"));
     }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, config.secret);
+    const { userId } = decoded; // <-- Use userId if that's what you're encoding
+
+    const userResponse = await userFind({ userId });
+
+    const planTimestamp = new Date(userResponse?.plan_expired_date).getTime();
+
+    if (!userResponse || isNaN(planTimestamp) || planTimestamp <= Date.now()) {
+      return next(new Error("Unauthorized: Plan expired or user not found"));
+    }
+
+    socket.userId = userId;
+    next();
   } catch (err) {
-    next(new Error("Failed to authenticate token"));
+    console.log("/er/", err);
+    return next(new Error("Failed to authenticate token"));
   }
-  return null;
 };
+
+
 
 module.exports = verifyJWT;

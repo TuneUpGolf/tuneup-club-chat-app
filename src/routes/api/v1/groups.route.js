@@ -12,9 +12,9 @@ const {
 
 module.exports = () => {
 
-  router.post('/create', auth(true), middleware(groupValidator.createGroup), createGroupController);
-  router.post('/get', auth(true), middleware(groupValidator.getGroup), getGroupController);
-  router.post('/delete', auth(true), middleware(groupValidator.deleteGroup), deleteGroupController); // delete entire chat
+  router.post('/create', auth(), middleware(groupValidator.createGroup), createGroupController);
+  router.post('/get', auth(), middleware(groupValidator.getGroup), getGroupController);
+  router.post('/delete', auth(), middleware(groupValidator.deleteGroup), deleteGroupController); // delete entire chat
 
   return router;
 };

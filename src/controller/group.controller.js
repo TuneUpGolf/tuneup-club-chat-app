@@ -32,7 +32,7 @@ exports.createGroupController = async (req, res) => {
   try {
     const { groupMembers, type } = req.body;
     const senderId = req.user.userId;
-
+    groupMembers.push(senderId);
     // Validate number of members
     if (groupMembers.length > 2 && type === user_constants.ONETOONE) {
       return failure(res, 400, serverResponseMessage.ATMOST_TWO_MEMBERS_ALLOWED);

@@ -29,19 +29,32 @@ const verifyJWT = (isReq = false) => {
       }
       const { userId } = decoded;
       const userResponse = await userFind({ userId });
+
       if (!userResponse) {
-        return res
-          .status(403)
-          .send({ status: false, code: 403, message: "Unauthorized !" });
+        return res.status(403).send({
+          status: false,
+          code: 403,
+          message: "Unauthorized! User not found.",
+        });
       }
-      if (isReq) {
-        req.user = req.user || {};
-        req.user.userId = userId;
+
+      const planDate = new Date(userResponse.plan_expired_date).getTime();
+
+      // Subscription check if isReq is true
+      if (isReq && (isNaN(planDate) || planDate <= Date.now())) {
+        return res.status(403).send({
+          status: false,
+          code: 403,
+          message: "Unauthorized! Subscription expired.",
+        });
       }
+
+      req.user = req.user || {};
+      req.user.userId = userId;
+
       next();
-      return null;
     });
-    return null
+
   };
 };
 
