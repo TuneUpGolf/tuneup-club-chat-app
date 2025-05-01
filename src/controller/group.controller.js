@@ -45,12 +45,12 @@ exports.createGroupController = async (req, res) => {
     // Validate sender is included and not more than 2 members for one-to-one
     if (type === user_constants.ONETOONE) {
       if (!groupMembers.includes(senderId)) {
-        return failure(res, 400, "Sender must be part of the group");
+        return failure(res, 400, serverResponseMessage.SENDER_MUST_BE_INCLUDED);
       }
 
       const others = groupMembers.filter(id => id !== senderId);
       if (others.length !== 1) {
-        return failure(res, 400, "Only one recipient allowed for one-to-one chat");
+        return failure(res, 400, serverResponseMessage.ONLY_ONE_RECIPIENT_ALLOWED);
       }
 
       const existingGroup = await groupFind({

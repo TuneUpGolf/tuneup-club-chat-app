@@ -9,7 +9,7 @@ const serverResponseMessage = {
 
   /* Group */
   GROUP_CREATED: "Group Created Succesfully",
-  GROUP_ALREADY_CREATED: "Group Alreeady Created With Same Name",
+  GROUP_ALREADY_CREATED: "Group Already Created With Same Name",
   GROUP_DELETE: "Group Deleted Succesfully",
   GROUP_FETCH: "Group Data Fetched Succesfully",
   FAILURE_DATA_CREATE: "Failure to Create Record",
@@ -23,6 +23,8 @@ const serverResponseMessage = {
   GROUP_NOT_PRESENT: "Any Record is Not Matching with Requested Group Name!",
   ATMOST_TWO_MEMBERS_ALLOWED: "Onetoone group can not contain more than two members",
   INVALID_GROUP_MEMBERS: "One or more group members are invalid users",
+  SENDER_MUST_BE_INCLUDED: "Sender must be part of the group",
+  ONLY_ONE_RECIPIENT_ALLOWED: "Only one recipient allowed for one-to-one chat",
 
   /* Catch Error */
   Catch_Error: "Please Recitify the Error",
