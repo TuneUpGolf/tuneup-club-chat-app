@@ -434,27 +434,33 @@ exports.updateUserLastSeen = async (userId) => {
 exports.handleUpload = async (socket, data) => {
   const updatedFileName = `${Date.now()}_${data.groupId}_${data.filename}`;
   const params = {
-    Bucket: "basestructure",
+    Bucket: "tuneup-club-staging",
     Key: updatedFileName,
     Body: data.fileData,
+    ACL: 'public-read',
   };
   try {
     const s3Result = await s3.upload(params).promise();
+    console.log(/s3Result/, s3Result);
+
     const publicUrl = s3Result.Location;
     socket.emit(socket_constant.UPLOAD_STATUS, {
       success: true,
       message: "Upload successful",
       publicUrl,
     });
-    logger.info(`Aattachment Uploaded to s3=> ${publicUrl}`);
+    logger.info(`Aattachment Uploaded to => ${publicUrl}`);
     await notifyUpload(socket, data, updatedFileName);
   } catch (error) {
+    console.log(/er/, error);
+
     logger.error(
       `[handleUpload] [Error] while uploading attachment to s3=> ${error}`
     );
     socket.emit(socket_constant.UPLOAD_STATUS, { success: false, message: "Upload failed" });
   }
 };
+
 
 
 

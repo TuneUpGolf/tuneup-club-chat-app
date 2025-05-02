@@ -34,25 +34,18 @@ const config = {
 */
   timeOutLimit: process.env.REQUEST_LIMIT_TIME,
 
+
   /*
-  |--------------------------------------------------------------------------
-  | AWS
-  |--------------------------------------------------------------------------
-  */
-  aws: {
-    key: process.env.AWS_ACCESS_KEY_ID,
-    secret: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
-    filePath: process.env.AWS_FILE_PATH,
-  },
-  /*
-  |--------------------------------------------------------------------------
-  | S3
-  |--------------------------------------------------------------------------
-  */
-  s3: {
-    bucket: process.env.S3_BUCKET,
-    folder: process.env.S3_FOLDER,
+|--------------------------------------------------------------------------
+| DigitalOcean Spaces Config
+|--------------------------------------------------------------------------
+*/
+  do_spaces: {
+    key: process.env.DO_SPACES_KEY,              // DO8013UXR96YGLCCUH
+    secret: process.env.DO_SPACES_SECRET,         // KmLaLh4/M4OMUNaOprBD792et6A62n2IC3zZHoNsY
+    endpoint: process.env.DO_SPACES_ENDPOINT,     // nyc3.digitaloceanspaces.com
+    bucket: process.env.DO_SPACES_BUCKET,         // tuneup-club-staging
+    filePath: process.env.DO_SPACES_FILE_PATH,    // uploads/ or any folder path
   },
 
 
