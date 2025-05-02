@@ -8,19 +8,16 @@ const {
   getUsers,
   deleteUserById,
 } = require("@services/user.services");
-const { getNextSequenceValue } = require("@utils/index");
 const logger = require("@utils/logger.utils");
 const jwt = require("jsonwebtoken");
 const { config } = require("@config/index");
 const { createGroupController } = require('@controller/group.controller')
 const { Chat } = require("@models/index")
-const { findGroupById, findOtherUserIds } = require('@services/group.services');
-const { getAllOnlineUsers } = require("../utils/common.utils");
+const { findOtherUserIds } = require('@services/group.services');
 
 exports.createUserController = async (req, res) => {
   try {
-    //get the next value of "userId"
-    // const id = await getNextSequenceValue('userId',Counter);
+
     const Response = await userCreate({
       ...req.body,
     });

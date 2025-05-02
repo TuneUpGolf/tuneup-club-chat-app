@@ -3,7 +3,7 @@ const joi = require("joi");
 exports.chatList = joi.object({
   groupId: joi.string().hex().length(24).required(),
   userType: joi.string().optional(),
-  userId: joi.number().required(),
+  // userId: joi.number().required(),
   perPage: joi.number().optional(),
   page: joi.number().optional(),
   keepdate: joi.boolean().optional(),
@@ -34,15 +34,17 @@ exports.deleteMultipleImage = joi.object({
 });
 exports.uploadImage = joi.object({
   groupId: joi.string().hex().length(24).required(),
-  userId: joi.string().optional(),
   senderId: joi.string().optional(),
 })
 
 
+
 exports.removeMessage = joi.object({
-  _id: joi.string().hex().length(24).required(),
-  userId: joi.string().optional(),
-});
-
-
-
+  // multiple msgs in array format []
+  messageIds: joi.alternatives().try(
+    joi.string().hex().length(24),
+    joi.array().items(joi.string().hex().length(24))
+  ),
+  _id: joi.string().hex().length(24),
+  userId: joi.string().optional()
+}).or('messageIds', '_id');

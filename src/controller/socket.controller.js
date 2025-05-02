@@ -4,6 +4,10 @@ const mongoose = require("mongoose");
 const logs = require("@root/src/helper/logs");
 const { socket_constant, serverResponseMessage, user_constants } = require("@constants/index");
 const { chatUpdate, getChatMesages, addChatReaction, removeChatReaction } = require("@services/chat.services");
+// Import leo-profanity
+const leoProfanity = require('leo-profanity');
+
+
 const {
   groupFind,
   groupChatMessageUpdateFind,
@@ -13,6 +17,7 @@ const {
   userFind,
   updateUserDetailOnUserId,
   changeUserStatus,
+  getAndroidTokensByUuids,
 } = require("@services/user.services");
 const { Group } = require("@models/index");
 const { Chat, User } = require("@models/index");
@@ -21,8 +26,9 @@ const logger = require("@utils/logger.utils");
 const { sanitize } = require("@utils/common.utils");
 const { getAllOnlineAdmins } = require('@utils/common.utils');
 const { redisClient } = require("@root/config/redis.config");
-
-
+const { s3 } = require("../services/aws.services");
+// Add words to the filter
+leoProfanity.add("badword1", "badword2", "abuseword", "idiot", "nonsense", "stupid");
 
 /**
  * Manages the connection of a socket to the server.
@@ -199,10 +205,21 @@ exports.chatMessage = ({
         groups.updatedAt = moment.utc(new Date());
         groups.save();
 
-        // Proceed only if the message is not empty.
+
         if (msg !== "") {
-          // Iterate through online users and add those who are group members to 'readUserIds'
-          // Mark the message as read only by online group members (and online admins).
+          console.log("Checking Abusive Words:", msg);
+
+          // Check for profanity
+          if (leoProfanity.check(msg)) {
+            socket.emit(socket_constant.WARNING, {
+              message: "Warning: Please avoid using abusive words!",
+              msg,
+            });
+            console.log("IS BAD WORd")
+            return;
+          }
+
+
           const readUserIds = onlineUsers.filter((ids) =>
             groups.groupMembers.includes(ids)
           );
@@ -407,6 +424,41 @@ exports.updateUserLastSeen = async (userId) => {
   }
 };
 
+/**
+ * Handles the upload process for a file attachment.
+ * 
+ * @param {Object} socket - The socket connection object for emitting events.
+ * @param {Object} data - Contains the file data, group ID, and filename.
+ * @returns {Promise<void>} - A promise indicating the completion of the upload process.
+ */
+exports.handleUpload = async (socket, data) => {
+  const updatedFileName = `${Date.now()}_${data.groupId}_${data.filename}`;
+  const params = {
+    Bucket: "basestructure",
+    Key: updatedFileName,
+    Body: data.fileData,
+  };
+  try {
+    const s3Result = await s3.upload(params).promise();
+    const publicUrl = s3Result.Location;
+    socket.emit(socket_constant.UPLOAD_STATUS, {
+      success: true,
+      message: "Upload successful",
+      publicUrl,
+    });
+    logger.info(`Aattachment Uploaded to s3=> ${publicUrl}`);
+    await notifyUpload(socket, data, updatedFileName);
+  } catch (error) {
+    logger.error(
+      `[handleUpload] [Error] while uploading attachment to s3=> ${error}`
+    );
+    socket.emit(socket_constant.UPLOAD_STATUS, { success: false, message: "Upload failed" });
+  }
+};
+
+
+
+
 function removeUserFromRoom (userId) {
   for (const key in users) {
     if (key.startsWith(userId + "_")) {
@@ -573,94 +625,6 @@ const notifyUnreadCountUser = ({
   }
 };
 
-exports.fileNotify = (socket, data, groupId, socketUsers) => {
-  try {
-    // Extract the filename from the provided 'data'
-    const filename = path.basename(data.name) ? path.basename(data.name) : null;
-
-    // Find the group based on its name and sort it by createdAt in descending order
-    Group.findOne({ _id: groupId })
-      .sort({ createdAt: -1 })
-      .then((groups) => {
-        // Get a list of online users in the group, including the sender
-        const onlineUsers = getOnlineUsers(groupId, data.senderId);
-        onlineUsers.push(data.senderId);
-        // Define the message as "File Attached" or use the message from 'data'
-        const msg = data.message || "File Attached";
-        const readUserIds = [];
-
-        // Iterate through online users and find those who are group members
-        onlineUsers.forEach((ids) => {
-          if (groups.groupMembers.includes(ids)) {
-            readUserIds.push(ids);
-          }
-        });
-
-        // Create a new chat message object for the uploaded file
-        const chatMessage = new Chat({
-          groupId: groups._id,
-          message: msg,
-          fileType: path.extname(filename),
-          isFile: true,
-          filePath: "temp/",
-          fileName: filename,
-          groupName: groups.groupName,
-          sendTo: groups.groupMembers,
-          senderId: data.senderId,
-          type: data.type,
-          readUserIds,
-        });
-
-        // Check if the message type is 'group' or 'onetoone' with the sender
-        if (
-          data.type === user_constants.GROUP ||
-          (data.type === user_constants.ONETOONE &&
-            groups.groupMembers.includes(data.senderId))
-        ) {
-          // Save the chat message for the uploaded file
-          chatMessage.save();
-
-          // Add the 'userName' to the chat message data
-          chatMessage._doc.userName = data.userName;
-
-          // Get the platform information from 'data'
-          const platform = data.plateform;
-
-          // If the platform is 'web', log the file upload and initiate AWS file upload
-          if (platform === "web") {
-            logs.fileUploadLog(groupId, data.senderId, filename);
-
-            // Initiate AWS file upload and handle the result (not shown here)
-            aws
-              .fileUpload(chatMessage.fileName, groups.groupName)
-              .then((finalRes) => { });
-          }
-
-          // Update the group's chat message data
-          groupChatMessageUpdateFind(groups._id, msg);
-
-          // Broadcast the chat message to all users in the group
-          socket.broadcast
-            .in(groupId)
-            .emit(socket_constant.RECEIVED, chatMessage);
-          socket.emit(socket_constant.RECEIVED, chatMessage);
-          // Notify unread messages to group members
-          notifyUnreadAllGroup(groups, {
-            senderId: data.senderId,
-            socketUsers,
-            onlineUsers,
-            socket,
-            msg,
-            userName: data.userName,
-            type: data.type,
-            messageData: chatMessage
-          });
-        }
-      });
-  } catch (error) {
-    socket.emit(socket_constant.SOMETHING_WENT_WRONG, error);
-  }
-};
 
 const getUnreadCountByUser = async ({
   userId,
@@ -771,3 +735,94 @@ exports.chatReaction = async (socket, data) => {
   }
 };
 
+/**
+ * Notifies users in the group about the uploaded file.
+ * 
+ * @param {Object} socket - The socket connection object for emitting events.
+ * @param {Object} data - Contains information about the uploaded file, group, sender, etc.
+ * @param {string} updatedFileName - The updated filename of the uploaded file.
+ * @returns {Promise<void>} - A promise indicating the completion of the notification process.
+ */
+const notifyUpload = async (socket, data, updatedFileName) => {
+  try {
+    // Extract the filename from the provided 'data'
+    const filename = updatedFileName;
+    const { groupId } = data;
+    // Find the group based on its name and sort it by createdAt in descending order
+    await Group.findOne({ _id: groupId })
+      .sort({ createdAt: -1 })
+      .then(async (groups) => {
+        // Get a list of online users in the group, including the sender
+        const onlineUsers = getOnlineUsers(groupId, data.senderId);
+        onlineUsers.push(data.senderId);
+
+        // Define the message as "File Attached" or use the message from 'data'
+        const msg = data.message || "File Attached";
+        const { socketUsers } = data;
+        const readUserIds = [];
+        // Iterate through online users and find those who are group members
+        onlineUsers.forEach((ids) => {
+          if (groups.groupMembers.includes(ids)) {
+            readUserIds.push(ids);
+          }
+        });
+
+        groups.groupMembers.forEach((userId) => {
+        })
+        // update unreadMessage Count for each user in group in redis
+        await setChatUnreadCount(groups.groupMembers, groupId, readUserIds);
+        // Create a new chat message object for the uploaded file
+        const chatMessage = new Chat({
+          groupId: groups._id,
+          message: msg,
+          fileType: path.extname(filename),
+          isFile: true,
+          filePath: "temp/",
+          fileName: filename,
+          groupName: groups.groupName,
+          sendTo: groups.groupMembers,
+          senderId: data.senderId,
+          type: data.type,
+          readUserIds,
+        });
+        // Check if the message type is 'group' or 'onetoone' with the sender
+        if (
+          data.type === user_constants.GROUP || data.type === user_constants.SUPPORT ||
+          (data.type === user_constants.ONETOONE &&
+            groups.groupMembers.includes(data.senderId))
+        ) {
+          // Save the chat message for the uploaded file
+          await chatMessage.save();
+
+          // Add the 'userName' to the chat message data
+          chatMessage._doc.userName = data.userName;
+
+          // Update the group's chat message data
+          groupChatMessageUpdateFind(groups._id, msg);
+
+
+          // Broadcast the chat message to all users in the group
+          socket
+            .to(groupId.toString())
+            .emit(socket_constant.RECEIVED, chatMessage);
+
+          // Notify unread messages to group members
+          notifyUnreadAllGroup(groups, {
+            senderId: data.senderId,
+            socketUsers,
+            onlineUsers,
+            socket,
+            msg,
+            userName: data.userName,
+            type: data.type,
+            isNewFile: true,
+            messageData: chatMessage
+          });
+        }
+      });
+  } catch (error) {
+    logger.error(
+      `[notifyUpload] [Error] while notifying uploads to user=> ${error}`
+    );
+  }
+};

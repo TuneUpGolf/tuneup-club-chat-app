@@ -15,9 +15,9 @@ const {
   findAllImagesInChat,
 } = require("@services/chat.services");
 const logger = require("@utils/logger.utils");
-const slugify = require("slugify");
-const { getAllOnlineAdmins } = require("../utils/common.utils");
-const sharp = require('sharp')
+
+const sharp = require('sharp');
+const { checkValidGroupMembers } = require("../services/user.services");
 
 /**
  * This function handles the creation of a new group chat. It checks if a group with the same members already exists
@@ -26,66 +26,72 @@ const sharp = require('sharp')
  * @param {Object} req - The request object containing the group name, members, and type.
  * @param {Object} res - The response object used to send back the appropriate response.
  */
+
+
 exports.createGroupController = async (req, res) => {
   try {
-
-    if (req.body.groupMembers.length > 2 && req.body.type === user_constants.ONETOONE) {
+    const { groupMembers, type } = req.body;
+    const senderId = req.user.userId;
+    groupMembers.push(senderId);
+    // Validate number of members
+    if (groupMembers.length > 2 && type === user_constants.ONETOONE) {
       return failure(res, 400, serverResponseMessage.ATMOST_TWO_MEMBERS_ALLOWED);
     }
-    // Check if a group with the same name already exists
-    if (req.body.groupMembers.length === 2 && req.body.type === user_constants.ONETOONE) {
-      const groupResponse = await groupFind({
-        groupMembers: { $all: req.body.groupMembers },
-        type: req.body.type,
-        isDeleted: false
-      })
-      if (groupResponse) {
+
+    if (groupMembers.length < 2) {
+      return failure(res, 400, serverResponseMessage.ATLEAST_TWO_MEMBERS_REQUIRED);
+    }
+
+    // Validate sender is included and not more than 2 members for one-to-one
+    if (type === user_constants.ONETOONE) {
+      if (!groupMembers.includes(senderId)) {
+        return failure(res, 400, serverResponseMessage.SENDER_MUST_BE_INCLUDED);
+      }
+
+      const others = groupMembers.filter(id => id !== senderId);
+      if (others.length !== 1) {
+        return failure(res, 400, serverResponseMessage.ONLY_ONE_RECIPIENT_ALLOWED);
+      }
+
+      const existingGroup = await groupFind({
+        groupMembers: { $all: groupMembers },
+        type,
+        isDeleted: false,
+      });
+
+      if (existingGroup) {
         return failure(res, 400, serverResponseMessage.GROUP_ALREADY_CREATED);
       }
     }
-    // If the number of groupMembers is less than 2, return failure
-    if (req.body.groupMembers.length < 2) {
-      return failure(
-        res,
-        400,
-        serverResponseMessage.ATLEAST_TWO_MEMBERS_REQUIRED,
-        {}
-      );
+
+    // Validate all user IDs exist
+    const foundUsers = await checkValidGroupMembers(groupMembers);
+    if (foundUsers.length !== groupMembers.length) {
+      return failure(res, 400, serverResponseMessage.INVALID_GROUP_MEMBERS);
     }
-    // Create the new group
-    const grpCreateRes = await groupCreate({ ...req.body });
-    // Get user data for the added members
+
+    // Create the group
+    const grpCreateRes = await groupCreate(req.body);
     const addedUsersData = await groupDetailsBasedOnId(grpCreateRes._id);
-    // Update addedUsers with current timestamp
-    for (const member of req.body.groupMembers) {
+
+    for (const member of groupMembers) {
       grpCreateRes.addedUsers.set(member.toString(), [moment.utc(new Date())]);
     }
     await grpCreateRes.save();
-    // Emit the NEW_GROUP_CREATE socket event
+
+    // Emit NEW_GROUP_CREATE socket event
     addedUsersData[0].groupMembers.forEach(userId => {
-      globalSocket.to(userId).emit(socket_constant.NEW_GROUP_CREATE, addedUsersData);
+      globalSocket.to(userId).emit("NEW_GROUP_CREATE", addedUsersData);
     });
 
-    return success(
-      res,
-      200,
-      serverResponseMessage.GROUP_CREATED,
-      addedUsersData
-    );
+    return success(res, 200, serverResponseMessage.GROUP_CREATED, addedUsersData);
   } catch (error) {
-    console.log(/er/, error);
-
-    logger.error(
-      `[createGroupController] [Error] while creating group => ${error}`
-    );
-    return failure(
-      res,
-      500,
-      serverResponseMessage.INTERNAL_SERVER_ERROR,
-      error.message
-    );
+    console.error("[createGroupController] Error:", error);
+    return failure(res, 500, serverResponseMessage.INTERNAL_SERVER_ERROR, error.message);
   }
 };
+
+
 
 /**
  * Controller to fetch group details based on given criteria.
