@@ -1,73 +1,75 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const { config } = require('@config/index');
-const ID = config.aws.key;
-const SECRET = config.aws.secret;
-const BUCKET_NAME = config.s3.bucket;
-const REGION = config.aws.region;
-const FILE_PATH = config.aws.filePath
 
+// DigitalOcean credentials & bucket config from your config file
+const ID = config.do_spaces.key;
+const SECRET = config.do_spaces.secret;
+const BUCKET_NAME = config.do_spaces.bucket;
+const FILE_PATH = config.do_spaces.filePath;
+
+// DigitalOcean Spaces endpoint
+const spacesEndpoint = new AWS.Endpoint('nyc3.digitaloceanspaces.com');
+
+// S3 client configured for DigitalOcean
 const s3 = new AWS.S3({
+    endpoint: spacesEndpoint,
     accessKeyId: ID,
     secretAccessKey: SECRET,
-    region: REGION,
+    region: 'nyc3',
 });
 
 module.exports = {
     s3,
-    /* UPLOADING FILE INTO S3 BUCKET */
-    fileUpload: (fileName, groupName) => {
+
+    fileUpload: (fileName) => {
         try {
-            if (fileName != null) {
-                return new Promise((resolve, reject) => {
-                    const fileContent = fs.readFileSync(process.env.PWD + '/resources/attachments/' + fileName);
-                    const params = {
-                        Bucket: BUCKET_NAME,
-                        Key: `${FILE_PATH}${fileName}`,
-                        Body: fileContent,
-                        ACL: 'public-read',
-                    };
-                    s3.upload(params, (err, data) => {
-                        if (err) {
-                            reject(err); // Reject the promise on error
-                            return;
-                        }
-                        const path = process.env.PWD + '/resources/attachments/' + fileName;
-                        fs.unlink(path, (err) => {
-                            if (err) reject(err); // Reject the promise on error
-                        });
-                        resolve(data);
+            if (!fileName) return null;
+
+            return new Promise((resolve, reject) => {
+                const filePath = `${process.env.PWD}/resources/attachments/${fileName}`;
+                const fileContent = fs.readFileSync(filePath);
+
+                const params = {
+                    Bucket: BUCKET_NAME,
+                    Key: `${FILE_PATH}${fileName}`,
+                    Body: fileContent,
+                    ACL: 'public-read',
+                    ContentType: 'application/octet-stream', // Optional: Detect MIME type dynamically if needed
+                };
+
+                s3.upload(params, (err, data) => {
+                    if (err) return reject(err);
+
+                    // Clean up local file
+                    fs.unlink(filePath, (unlinkErr) => {
+                        if (unlinkErr) return reject(unlinkErr);
+
+                        // Return public URL explicitly
+                        const publicUrl = `https://${BUCKET_NAME}.${spacesEndpoint.host}/${params.Key}`;
+                        resolve({ location: publicUrl });
                     });
                 });
-            } else {
-                // Return a value explicitly if fileName is null
-                return null; // Adjust the return value accordingly
-            }
+            });
         } catch (error) {
-            return error;
+            return Promise.reject(error);
         }
-    },
-    /* FILE DOWNLOAD FROM AWS S3 BUCKET */
+    }
+    ,
+
+    /* DOWNLOAD FILE FROM DIGITALOCEAN SPACES */
     fileDownloding: (fileKey) => {
         try {
             if (fileKey != null) {
                 return new Promise((resolve, reject) => {
-                    const s3 = new AWS.S3({
-                        accessKeyId: ID,
-                        secretAccessKey: SECRET,
-                        region: REGION,
-                    });
                     const options = {
                         Bucket: BUCKET_NAME,
                         Key: `${FILE_PATH}${fileKey}`,
                     };
                     s3.getObject(options, (err, data) => {
-                        if (err) {
-                            throw err;
-                        } else {
-                            const json = new Buffer(data.Body).toString("base64");
-                            resolve(json);
-                        }
+                        if (err) return reject(err);
+                        const base64 = Buffer.from(data.Body).toString("base64");
+                        resolve(base64);
                     });
                 });
             }
@@ -76,33 +78,28 @@ module.exports = {
         }
         return null;
     },
-    /* FILE DELETE FROM AWS S3 BUCKET */
+
+    // /* DELETE FILES FROM DIGITALOCEAN SPACES */
     deleteMultipleImages: (imagesKeys) => {
         try {
             return new Promise((resolve, reject) => {
                 const paramsArray = imagesKeys.map(key => ({
                     Key: `${FILE_PATH}${key}`
                 }));
-
                 const params = {
                     Bucket: BUCKET_NAME,
                     Delete: {
                         Objects: paramsArray,
-                        Quiet: false
-                    }
+                        Quiet: false,
+                    },
                 };
-
-                // Delete Selected images
                 s3.deleteObjects(params, (err, data) => {
-                    if (err) {
-                        reject(err)
-                    } else {
-                        resolve(data);
-                    }
+                    if (err) return reject(err);
+                    resolve(data);
                 });
             });
         } catch (error) {
             return error;
         }
     }
-}
+};
