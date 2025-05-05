@@ -26,7 +26,7 @@ const logger = require("@utils/logger.utils");
 const { sanitize } = require("@utils/common.utils");
 const { getAllOnlineAdmins } = require('@utils/common.utils');
 const { redisClient } = require("@root/config/redis.config");
-const { s3 } = require("../services/aws.services");
+const { s3 } = require("../services/digitalOceanService");
 // Add words to the filter
 leoProfanity.add("badword1", "badword2", "abuseword", "idiot", "nonsense", "stupid");
 

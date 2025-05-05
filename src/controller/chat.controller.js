@@ -23,6 +23,7 @@ const {
   handleUpload
 } = require("@controller/socket.controller");
 const { redisClient } = require("@root/config/redis.config");
+const digitalOceanService = require("../services/digitalOceanService");
 
 /**
  * Controller function to retrieve a list of chat messages for a specific group and user.
@@ -204,7 +205,7 @@ exports.clearChatController = async (req, res, next) => {
     ]);
     // If there are images found in the chat, delete them from AWS
     if (imagesChat.length) {
-      await aws.deleteMultipleImages(imagesChat[0].imagesKeys);
+      await digitalOceanService.deleteMultipleImages(imagesChat[0].imagesKeys);
     }
     return success(res, 200, serverResponseMessage.CHAT_CLEAR, clearChatMsg);
   } catch (error) {
