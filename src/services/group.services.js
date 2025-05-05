@@ -2,7 +2,6 @@ const moment = require("moment");
 const { ObjectId } = require("mongoose").Types;
 const { perPage } = require("@config/index");
 const { Group } = require("@models/index");
-const { config } = require('@config/index');
 const logger = require("@utils/logger.utils")
 
 exports.groupCreate = async (req) => {
@@ -405,7 +404,7 @@ exports.listGroups = async ({ userId, page, perPage, groupName, type, isFilter, 
               }
             },
             {
-              $lookup: {                  // Lookup details of group members excluding the login user
+              $lookup: {              // Lookup details of group members excluding the login user
                 from: "users",
                 let: { userId: group_members, loginUserId: userId },
                 pipeline: [
@@ -501,17 +500,6 @@ exports.listGroups = async ({ userId, page, perPage, groupName, type, isFilter, 
 };
 
 
-exports.updateGroupProfile = async (groupId, imageUrl) => {
-  try {
-    return await Group.findOneAndUpdate(
-      { _id: groupId },
-      { $set: { profile_img: imageUrl } },
-      { new: true }
-    );
-  } catch (error) {
-    throw new Error(error);
-  }
-}
 
 /**
  * Finds other user IDs with whom the specified user is in one-to-one groups.
