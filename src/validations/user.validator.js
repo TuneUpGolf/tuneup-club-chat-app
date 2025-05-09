@@ -58,6 +58,11 @@ exports.createUser = joi.object({
     .min(1)
     .required(),
 
+  tenant_id: joi
+    .array()
+    .items(joi.string())
+    .min(1)
+    .required(),
 
   active_status: joi
     .boolean()
@@ -81,14 +86,12 @@ exports.updateUser = joi.object({
   _id: joi.string().hex().length(24).optional(),
   name: joi
     .string()
-    .regex(/^[a-zA-Z]+(?: [a-zA-Z]+)*$/)
-    .required(),
+    .regex(/^[a-zA-Z]+(?: [a-zA-Z]+)*$/),
 
   email: joi
     .string()
     .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
-    .email()
-    .required(),
+    .email(),
 
   country: joi
     .string()
@@ -107,8 +110,7 @@ exports.updateUser = joi.object({
 
   phone: joi
     .string()
-    .regex(/^\d{7,15}$/)
-    .required(),
+    .regex(/^\d{7,15}$/),
 
   avatar: joi
     .string()
@@ -122,6 +124,11 @@ exports.updateUser = joi.object({
   plan_id: joi
     .string()
     .optional(),
+  tenant_id: joi
+    .array()
+    .items(joi.string())
+    .min(1)
+    .required(),
 
   plan_expired_date: joi
     .date()
