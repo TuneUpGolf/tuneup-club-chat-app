@@ -1,5 +1,5 @@
 const { ObjectId } = require("mongoose").Types;
-
+const mongoose = require("mongoose");
 const { User } = require("@models/index.js");
 RegExp.escape = function (s) {
   return s.replace(/[\\^$*+?.()|[\]{}-]/g, "\\$&");
@@ -129,11 +129,15 @@ exports.changeUserStatus = async (userId) => {
 }
 
 
+
+
 exports.checkValidGroupMembers = async (memberIds) => {
   try {
-    return await User.find({ userId: { $in: memberIds } });
+    const validObjectIds = memberIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    return await User.find({ _id: { $in: validObjectIds } });
   } catch (error) {
     logger.error(`[checkValidGroupMembers] Failed to validate group members: ${error}`);
     throw new Error(error);
   }
 };
+
