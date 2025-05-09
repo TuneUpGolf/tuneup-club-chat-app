@@ -1,11 +1,5 @@
-const user_constants ={
-    SALESPERSON:'salesPerson',
-    ADMIN:'admin',
-    GUEST:'guest',
-    ONETOONE:'onetoone',
-    GROUP:'group',
-    SUPPORT:'support',  
-    ALLONLINEADMIN:'allOnlineAdmin' 
+const user_constants = {
+    ONETOONE: 'onetoone',
 };
 
-module.exports ={user_constants}
+module.exports = { user_constants }

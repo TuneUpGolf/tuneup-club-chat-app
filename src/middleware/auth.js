@@ -28,7 +28,7 @@ const verifyJWT = (isReq = false) => {
           });
       }
       const { userId } = decoded;
-      const userResponse = await userFind({ userId });
+      const userResponse = await userFind({ _id:userId });
 
       if (!userResponse) {
         return res.status(403).send({

@@ -14,6 +14,8 @@ const { config } = require("@config/index");
 const { createGroupController } = require('@controller/group.controller')
 const { Chat } = require("@models/index")
 const { findOtherUserIds } = require('@services/group.services');
+const mongoose = require("mongoose");
+
 
 exports.createUserController = async (req, res) => {
   try {
@@ -101,6 +103,9 @@ exports.profileUserController = async (req, res) => {
 exports.getUserJwtController = (req, res) => {
   try {
     const { userId } = req.body;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return failure(res, 400, "Invalid ObjectId provided", "Invalid ObjectId format");
+    }
     //create jwt token 
     const token = jwt.sign({ userId }, config.secret, { expiresIn: config.jwtExpire });
     return success(res, 200, serverResponseMessage.TOKEN_CREATED, token);

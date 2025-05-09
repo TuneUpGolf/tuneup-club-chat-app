@@ -1,10 +1,11 @@
+
 module.exports = (mongoose) => {
   const userSchema = new mongoose.Schema(
     {
       userId: {
         type: String,
-        unique: true,
-        index: true
+        unique: false,  // This allows duplicates for userId
+        index: true,
       },
       name: {
         type: String,
@@ -31,6 +32,7 @@ module.exports = (mongoose) => {
         type: String,
         default: null,
       },
+
       lang: {
         type: String,
         default: 'en',
@@ -38,8 +40,13 @@ module.exports = (mongoose) => {
       plan_id: {
         type: String,
       },
+      tenant_id: {
+        type: [String],
+        required: true,
+      },
       plan_expired_date: {
         type: Date,
+        default: null,
       },
       active_status: {
         type: Boolean,

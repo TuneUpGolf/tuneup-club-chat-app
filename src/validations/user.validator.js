@@ -36,7 +36,7 @@ exports.createUser = joi.object({
 
   avatar: joi
     .string()
-    .uri()
+    .allow(null)
     .optional(),
 
   lang: joi
@@ -49,7 +49,15 @@ exports.createUser = joi.object({
 
   plan_expired_date: joi
     .date()
+    .allow(null)
     .optional(),
+
+  tenant_id: joi
+    .array()
+    .items(joi.string())
+    .min(1)
+    .required(),
+
 
   active_status: joi
     .boolean()
@@ -136,9 +144,16 @@ exports.updateUser = joi.object({
     .date()
     .optional(),
 });
+
 exports.getUser = joi.object({
-  userId: joi.string().required(),
-});
+  userId: joi.string().optional(),
+
+  email: joi
+    .string()
+    .email()
+    .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+    .optional(),
+}).or('userId', 'email');
 
 
 
