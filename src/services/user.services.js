@@ -1,5 +1,5 @@
 const { ObjectId } = require("mongoose").Types;
-const mongoose = require("mongoose");
+
 const { User } = require("@models/index.js");
 RegExp.escape = function (s) {
   return s.replace(/[\\^$*+?.()|[\]{}-]/g, "\\$&");
@@ -37,7 +37,7 @@ exports.userUpdate = async (req, Id) => {
 
 exports.userData = async (input) => {
   try {
-    return await User.findOne(input).lean();
+    return await User.findById({ _id: input }).lean();
   } catch (error) {
     throw new Error(error);
   }
@@ -53,8 +53,8 @@ exports.userIdData = async (userId) => {
 };
 
 // Service to delete user by userId
-exports.deleteUserById = async (userId) => {
-  return await User.deleteOne({ userId });
+exports.deleteUserById = async (input) => {
+  return await User.deleteOne({ _id: input });
 };
 
 
@@ -66,9 +66,9 @@ exports.userAll = async (groupMembers) => {
   }
 };
 
-exports.userFind = async (req) => {
+exports.userFind = async (query) => {
   try {
-    return await User.findOne(req);
+    return await User.findOne(query);
   } catch (error) {
     throw new Error(error);
   }

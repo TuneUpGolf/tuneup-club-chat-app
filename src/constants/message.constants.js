@@ -5,7 +5,8 @@ const serverResponseMessage = {
   USER_FETCH: "User Data Fetched Succesfully",
   TOKEN_CREATED: "Token Created Successfully",
   USER_DELETED_SUCCESSFULLY: "User Deleted Successfully",
-
+  USER_NOT_FOUND: "User Not Found",
+  MISSING_FIELDS: "Please Provide All Required Fields",
 
   /* Group */
   GROUP_CREATED: "Group Created Succesfully",
