@@ -276,8 +276,9 @@ exports.allImageController = async (req, res, next) => {
 // Controller: removeMessage
 exports.removeMessage = async (req, res) => {
   try {
-    const { messageIds, _id, userId } = req.body;
-
+    const { messageIds, _id } = req.body;
+    const { userId } = req.user;
+    console.log("Request body:", req.body);
     const idsToDelete = messageIds || (_id ? [_id] : []);
 
     if (idsToDelete.length === 0) {
