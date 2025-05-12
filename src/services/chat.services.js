@@ -26,9 +26,7 @@ exports.chatList = async (whereArr, perPage, page) => {
             },
             // Add a $match stage for message search
             {
-              $match: {
-                message: { $regex: new RegExp(whereArr.message, "i") }, // Adjust based on your message field
-              },
+              $match: whereArr.message ? { message: { $regex: new RegExp(whereArr.message, "i") } } : {}
             },
             {
               $lookup: {
@@ -61,17 +59,26 @@ exports.chatList = async (whereArr, perPage, page) => {
             {
               $lookup: {
                 from: "users",
-                localField: "senderId",
-                foreignField: "userId",
-                as: "userData",
-              },
+                let: { senderIdObj: { $toObjectId: "$senderId" } }, // Convert senderId to ObjectId
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $eq: ["$_id", "$$senderIdObj"]  // Match _id in users, not userId
+                      }
+                    }
+                  }
+                ],
+                as: "userData"
+              }
             },
             {
               $unwind: {
                 path: "$userData",
-                preserveNullAndEmptyArrays: false,
-              },
+                preserveNullAndEmptyArrays: false
+              }
             },
+
             {
               $sort: {
                 createdAt: -1,
