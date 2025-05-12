@@ -27,9 +27,6 @@ const verifyJWT = async (socket, next) => {
 
     const userResponse = await userFind({ _id: userId });
 
-
-
-
     const planTimestamp = new Date(userResponse?.plan_expired_date).getTime();
 
 
