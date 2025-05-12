@@ -45,11 +45,12 @@ exports.chatListController = async (req, res, next) => {
     const whereArr = {
       groupId: mongoose.Types.ObjectId(groupId),
       isDeleted: false,
-      $or: [
-        { message: { $regex: new RegExp(message, "i") } }, // Case-insensitive search
-        // Add more search criteria if needed
-      ],
+      // Conditionally add message search
+      ...(message && message.trim() !== "" && {
+        $or: [{ message: { $regex: new RegExp(message, "i") } }],
+      }),
     };
+
     if (user_type !== user_constants.ADMIN) {
       whereArr.sendTo = { $in: [userId] };
     }    // Add condition for userType "customer" or "guest"
