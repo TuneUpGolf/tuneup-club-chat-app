@@ -2,12 +2,10 @@ const path = require("path");
 const moment = require("moment");
 const mongoose = require("mongoose");
 const logs = require("@root/src/helper/logs");
-const { socket_constant, serverResponseMessage, user_constants } = require("@constants/index");
+const { socket_constant, user_constants } = require("@constants/index");
 const { chatUpdate, getChatMesages, addChatReaction, removeChatReaction } = require("@services/chat.services");
 // Import leo-profanity
 const leoProfanity = require('leo-profanity');
-
-
 const {
   groupFind,
   groupChatMessageUpdateFind,
@@ -17,7 +15,6 @@ const {
   userFind,
   updateUserDetailOnUserId,
   changeUserStatus,
-  getAndroidTokensByUuids,
 } = require("@services/user.services");
 const { Group } = require("@models/index");
 const { Chat, User } = require("@models/index");
@@ -27,8 +24,6 @@ const { sanitize } = require("@utils/common.utils");
 const { getAllOnlineAdmins } = require('@utils/common.utils');
 const { redisClient } = require("@root/config/redis.config");
 const { s3 } = require("../services/digitalOceanService");
-// Add words to the filter
-leoProfanity.add("badword1", "badword2", "abuseword", "idiot", "nonsense", "stupid");
 
 /**
  * Manages the connection of a socket to the server.

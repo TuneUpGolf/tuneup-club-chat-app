@@ -41,11 +41,11 @@ const config = {
 |--------------------------------------------------------------------------
 */
   do_spaces: {
-    key: process.env.DO_SPACES_KEY,              // DO8013UXR96YGLCCUH
-    secret: process.env.DO_SPACES_SECRET,         // KmLaLh4/M4OMUNaOprBD792et6A62n2IC3zZHoNsY
-    endpoint: process.env.DO_SPACES_ENDPOINT,     // nyc3.digitaloceanspaces.com
-    bucket: process.env.DO_SPACES_BUCKET,         // tuneup-club-staging
-    filePath: process.env.DO_SPACES_FILE_PATH,    // uploads/ or any folder path
+    key: process.env.DO_SPACES_KEY,
+    secret: process.env.DO_SPACES_SECRET,
+    endpoint: process.env.DO_SPACES_ENDPOINT,
+    bucket: process.env.DO_SPACES_BUCKET,
+    filePath: process.env.DO_SPACES_FILE_PATH,
   },
 
 
