@@ -37,9 +37,16 @@ exports.userUpdate = async (req, Id) => {
   }
 };
 
+
 exports.userData = async (input) => {
   try {
-    return await User.findById({ _id: input }).lean();
+    if (input.userId) {
+      return await User.findById(input.userId).lean();
+    } else if (input.email) {
+      return await User.findOne({ email: input.email }).lean();
+    } else {
+      return null;
+    }
   } catch (error) {
     throw new Error(error);
   }
