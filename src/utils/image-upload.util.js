@@ -1,3 +1,6 @@
+
+require('dotenv').config();
+
 const multer = require("multer");
 const logger = require("@utils/logger.utils");
 
@@ -17,22 +20,21 @@ const fileFilterProfile = (req, file, cb) => {
   }
 };
 
-const FILE_SIZE = 2 * 1024 * 1024
-const storage = () =>
-  multer.memoryStorage({
-    limits: FILE_SIZE,
-  });
+const FILE_SIZE = parseInt(process.env.FILE_SIZE, 10);
+
+const storage = () => multer.memoryStorage();
+
 const upload = multer({
-  limits: { fileSize: FILE_SIZE }, //2mb
+  limits: { fileSize: FILE_SIZE },
   storage: storage(),
   fileFilter,
 }).array("image");
+
 const uploadProfile = multer({
-  limits: { fileSize: FILE_SIZE }, //2mb
+  limits: { fileSize: FILE_SIZE },
   storage: storage(),
   fileFilter: fileFilterProfile,
 }).single("image");
-
 
 
 module.exports = { upload, uploadProfile };
