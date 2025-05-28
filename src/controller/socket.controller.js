@@ -608,21 +608,21 @@ const notifyUnreadCountUser = ({
   if (isNewFile) {
     socket
       .to(userId.toString())
-      .emit(socket_constant.NOTIFY_UNREAD_GLOBAL_COUNT, unreadData);
+      .emit(socket_constant.NOTIFY_UNREAD_GLOBAL, unreadData);
   } else {
     socket.broadcast
       .in(userId)
-      .emit(socket_constant.NOTIFY_UNREAD_GLOBAL_COUNT, unreadData);
+      .emit(socket_constant.NOTIFY_UNREAD_GLOBAL, unreadData);
   }
 
   if (isNewFile) {
     socket
       .to(userId.toString())
-      .emit(socket_constant.NOTIFY_UNREAD_GLOBAL_COUNT, responseObj);
+      .emit(socket_constant.NOTIFY_UNREAD_GLOBAL, responseObj);
   } else {
     socket.broadcast
       .in(userId)
-      .emit(socket_constant.NOTIFY_UNREAD_GLOBAL_COUNT, responseObj);
+      .emit(socket_constant.NOTIFY_UNREAD_GLOBAL, responseObj);
   }
 };
 
