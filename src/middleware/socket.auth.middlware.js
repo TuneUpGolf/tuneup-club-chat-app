@@ -21,19 +21,15 @@ const verifyJWT = async (socket, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-
     const decoded = jwt.verify(token, config.secret);
-    const { userId } = decoded; // <-- Use userId if that's what you're encoding
+    const { userId } = decoded;
 
     const userResponse = await userFind({ _id: userId });
 
-    const planTimestamp = new Date(userResponse?.plan_expired_date).getTime();
-
-
-    if (!userResponse || isNaN(planTimestamp) || planTimestamp <= Date.now()) {
-
-      return next(new Error("Unauthorized: Plan expired or user not found"));
+    if (!userResponse) {
+      return next(new Error("Unauthorized: User not found"));
     }
+
     socket.userId = userId;
     next();
   } catch (err) {
@@ -41,7 +37,5 @@ const verifyJWT = async (socket, next) => {
     return next(new Error("Failed to authenticate token"));
   }
 };
-
-
 
 module.exports = verifyJWT;
