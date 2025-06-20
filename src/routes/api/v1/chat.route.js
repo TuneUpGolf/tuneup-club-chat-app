@@ -21,7 +21,7 @@ module.exports = () => {
   router.delete("/delete-message", auth(), middleware(chatValidator.removeMessage), removeMessage)
   router.post('/erase', auth(), middleware(chatValidator.clearChat), clearChatController);
   router.post('/all-images', auth(), middleware(chatValidator.allImages), allImageController);
-  router.post('/image', handleFileUpload(upload), auth(true), middleware(chatValidator.uploadImage), uploadImageController);   // media, recodings
+  router.post('/image', handleFileUpload(upload), auth(), middleware(chatValidator.uploadImage), uploadImageController);   // media, recodings
 
 
   return router;
