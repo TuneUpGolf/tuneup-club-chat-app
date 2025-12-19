@@ -2,8 +2,16 @@ const path = require("path");
 const moment = require("moment");
 const mongoose = require("mongoose");
 const logs = require("@root/src/helper/logs");
-const { socket_constant, user_constants } = require("@constants/index");
-const { chatUpdate, getChatMesages, addChatReaction, removeChatReaction } = require("@services/chat.services");
+const {
+  socket_constant,
+  user_constants
+} = require("@constants/index");
+const {
+  chatUpdate,
+  getChatMesages,
+  addChatReaction,
+  removeChatReaction
+} = require("@services/chat.services");
 // Import leo-profanity
 const leoProfanity = require('leo-profanity');
 const {
@@ -16,14 +24,27 @@ const {
   updateUserDetailOnUserId,
   changeUserStatus,
 } = require("@services/user.services");
-const { Group } = require("@models/index");
-const { Chat, User } = require("@models/index");
+const {
+  Group
+} = require("@models/index");
+const {
+  Chat,
+  User
+} = require("@models/index");
 const users = {};
 const logger = require("@utils/logger.utils");
-const { sanitize } = require("@utils/common.utils");
-const { getAllOnlineAdmins } = require('@utils/common.utils');
-const { redisClient } = require("@root/config/redis.config");
-const { s3 } = require("../services/digitalOceanService");
+const {
+  sanitize
+} = require("@utils/common.utils");
+const {
+  getAllOnlineAdmins
+} = require('@utils/common.utils');
+const {
+  redisClient
+} = require("@root/config/redis.config");
+const {
+  s3
+} = require("../services/digitalOceanService");
 
 /**
  * Manages the connection of a socket to the server.
@@ -34,7 +55,10 @@ const { s3 } = require("../services/digitalOceanService");
  * @param {Object} res - The response object used for handling responses.
  * @returns {Promise<void>} - A promise indicating the completion of the connection process.
  */
-exports.connection = async ({ socket, socketUsers }) => {
+exports.connection = async ({
+  socket,
+  socketUsers
+}) => {
   try {
     //status will come as true for newly connectiion
     socket.join(socket.handshake.query.senderId);
@@ -68,16 +92,22 @@ const storeUserId = (data, groupId) => {
 // Helper function to save chat group information to the database
 const saveChatGroupToDatabase = async (groupId, data, socket) => {
   try {
-    const grpObj = await groupFind({ _id: groupId });
-    const array = grpObj
-      ? Object.keys(JSON.parse(JSON.stringify(grpObj.removedUsers)))
-      : 0;
+    const grpObj = await groupFind({
+      _id: groupId
+    });
+    const array = grpObj ?
+      Object.keys(JSON.parse(JSON.stringify(grpObj.removedUsers))) :
+      0;
 
     let index = 1;
     if (data.type === user_constants.ONETOONE) {
       const grupMembers = grpObj.groupMembers;
-      const firstMemberData = await userFind({ userId: grupMembers[0] });
-      const secondMemberData = await userFind({ userId: grupMembers[1] });
+      const firstMemberData = await userFind({
+        userId: grupMembers[0]
+      });
+      const secondMemberData = await userFind({
+        userId: grupMembers[1]
+      });
       if (!(firstMemberData && secondMemberData)) {
         index = 0;
       }
@@ -134,7 +164,9 @@ exports.roomDisconnect = async (socket, socketUsers, data) => {
 // Main function
 exports.join = async (data, socket) => {
   try {
-    const { groupId } = data;
+    const {
+      groupId
+    } = data;
 
     storeUserId(data, groupId);
 
@@ -149,7 +181,10 @@ exports.join = async (data, socket) => {
         data.senderId = data.senderId.toString();
       }
 
-      await chatUpdate({ groupId, senderId: data.senderId });
+      await chatUpdate({
+        groupId,
+        senderId: data.senderId
+      });
 
     }
   } catch (error) {
@@ -188,7 +223,9 @@ exports.chatMessage = ({
 
     // Find the group based on its name and sort it by createdAt in descending order
     Group.findById(groupId)
-      .sort({ createdAt: -1 })
+      .sort({
+        createdAt: -1
+      })
       .then(async (groups) => {
         console.log(/gr/, groups);
 
@@ -265,6 +302,53 @@ exports.chatMessage = ({
           const chatMessageObj = await chatMessage.save();
           await groupChatMessageUpdateFind(groups._id, msg);
 
+          // Notify Test
+          const allUserIds = groups.groupMembers;
+          const sender = await User.findOne({
+            _id: senderId
+          });
+
+          if (!sender) {
+            console.warn(`Sender not found: ${senderId}`);
+            return;
+          }
+
+          // 🔹 Notify ALL group members (online and offline)
+          for (const userId of allUserIds) {
+            if (userId.toString() === senderId.toString()) continue;
+            const receiver = await User.findOne({
+              _id: userId
+            });
+            if (!receiver) {
+              console.warn(`Receiver not found: ${userId}`);
+              continue;
+            }
+
+            const isOnline = onlineUsers.includes(userId);
+
+            await fetch("https://tuneupclub.com/api/notify-message", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                tenant_id: Array.isArray(sender.tenant_id) ?
+                  sender.tenant_id[0] :
+                  sender.tenant_id, // ✅ FIXED
+                sender_id: sender.userId,
+                sender_email: sender.email,
+                receiver_id: receiver.userId,
+                receiver_email: receiver.email,
+                message: msg,
+                group_id: groupId,
+                type: type || "chat",
+                status: isOnline ? "online" : "offline", // ✅ Added status flag
+                sent_at: new Date().toISOString(),
+              }),
+            });
+          }
+
+
           // Broadcast the message to everyone in the group (except sender).
           // Emit the message back to sender (self-confirmation).
           messageData.parentMessage = parentMessage;
@@ -306,7 +390,7 @@ exports.chatMessage = ({
  * @returns {Promise<void>} - A promise that resolves when the counts have been updated.
  * @throws {Error} - If an error occurs during the Redis operations.
  */
-async function setChatUnreadCount (groupMembers, groupId, readUserIds) {
+async function setChatUnreadCount(groupMembers, groupId, readUserIds) {
   try {
     await Promise.all(
       groupMembers.map(async (id) => {
@@ -324,14 +408,22 @@ async function setChatUnreadCount (groupMembers, groupId, readUserIds) {
 }
 
 
-exports.notifyTypingAllGroup = function (
-  { groupId, socket, data, socketUsers },
+exports.notifyTypingAllGroup = function ({
+    groupId,
+    socket,
+    data,
+    socketUsers
+  },
   emitName
 ) {
   try {
     // Find the group based on its name and sort it by createdAt in descending order
-    Group.findOne({ _id: groupId })
-      .sort({ createdAt: -1 })
+    Group.findOne({
+        _id: groupId
+      })
+      .sort({
+        createdAt: -1
+      })
       .then(async (group) => {
         // If the group does not exist, return from the function
         if (!group) return;
@@ -452,7 +544,10 @@ exports.handleUpload = async (socket, data) => {
     logger.error(
       `[handleUpload] [Error] while uploading attachment to s3=> ${error}`
     );
-    socket.emit(socket_constant.UPLOAD_STATUS, { success: false, message: "Upload failed" });
+    socket.emit(socket_constant.UPLOAD_STATUS, {
+      success: false,
+      message: "Upload failed"
+    });
   }
 };
 
@@ -460,7 +555,7 @@ exports.handleUpload = async (socket, data) => {
 
 
 
-function removeUserFromRoom (userId) {
+function removeUserFromRoom(userId) {
   for (const key in users) {
     if (key.startsWith(userId + "_")) {
       delete users[key];
@@ -470,7 +565,9 @@ function removeUserFromRoom (userId) {
 
 exports.disconnect = async (socket, socketUsers) => {
   try {
-    const { senderId } = socket.handshake.query;
+    const {
+      senderId
+    } = socket.handshake.query;
     removeUserFromRoom(senderId);
 
     await redisClient.sRem('allOnlineUsers', socket.handshake.query.senderId);
@@ -526,8 +623,7 @@ exports.disconnect = async (socket, socketUsers) => {
 };
 
 const notifyUnreadAllGroup = async (
-  group,
-  {
+  group, {
     senderId,
     socketUsers,
     onlineUsers,
@@ -570,8 +666,8 @@ const notifyUnreadAllGroup = async (
         });
 
         // Retrieve the overall unread message count for the user and group
-        const hashKey = `${userId}:${group._id.toString()}`;   //create hashKey based on userId:groupId
-        const unreadMessageCount = await redisClient.get(hashKey);  // get unreadCount from redis 
+        const hashKey = `${userId}:${group._id.toString()}`; //create hashKey based on userId:groupId
+        const unreadMessageCount = await redisClient.get(hashKey); // get unreadCount from redis 
         const dbRes = [{
           _id: userId,
           count: unreadMessageCount || 0,
@@ -639,7 +735,9 @@ const getUnreadCountByUser = async ({
     // Retrieve the group IDs in which the user is a member
     const groupIds = await Group.find({
       _id: groups._id,
-      groupMembers: { $in: [userId] },
+      groupMembers: {
+        $in: [userId]
+      },
     }).distinct("groupName");
 
     let where = {};
@@ -649,16 +747,26 @@ const getUnreadCountByUser = async ({
       where = {
         isDeleted: false,
         groupId: groupIds._id,
-        readUserIds: { $nin: [userId] },
-        sendTo: { $in: [userId] },
+        readUserIds: {
+          $nin: [userId]
+        },
+        sendTo: {
+          $in: [userId]
+        },
       };
     } else {
       where = {
         isDeleted: false,
         groupId: groupIds._id,
-        readUserIds: { $nin: [userId] },
-        senderId: { $nin: [userId] },
-        sendTo: { $in: [userId] },
+        readUserIds: {
+          $nin: [userId]
+        },
+        senderId: {
+          $nin: [userId]
+        },
+        sendTo: {
+          $in: [userId]
+        },
       };
     }
 
@@ -672,7 +780,15 @@ const getUnreadCountByUser = async ({
 
 exports.chatReaction = async (socket, data) => {
   try {
-    const { id, reaction, userId, userName, isAdd, reactionId, emojiId } = data;
+    const {
+      id,
+      reaction,
+      userId,
+      userName,
+      isAdd,
+      reactionId,
+      emojiId
+    } = data;
     //create response Object
     const chatReactionResponse = {
       reaction,
@@ -698,8 +814,7 @@ exports.chatReaction = async (socket, data) => {
       // if reaction is not found emit an event with message
       if (!val) {
         socket.emit(
-          socket_constant.CHAT_REACTION_REMOVE,
-          {
+          socket_constant.CHAT_REACTION_REMOVE, {
             success: true,
             message: "reaction not found",
             chatReactionResponse,
@@ -711,20 +826,18 @@ exports.chatReaction = async (socket, data) => {
     }
     // Emit socket event with appropriate message based on whether the reaction was added or removed
     socket.emit(
-      isAdd
-        ? socket_constant.CHAT_REACTION_RESULT
-        : socket_constant.CHAT_REACTION_REMOVE,
-      {
+      isAdd ?
+      socket_constant.CHAT_REACTION_RESULT :
+      socket_constant.CHAT_REACTION_REMOVE, {
         success: true,
         message: isAdd ? "reacted to message" : "reaction removed successfully",
         chatReactionResponse,
       }
     )
     socket.broadcast.in(chatReactionResponse?.groupId?.toString()).emit(
-      isAdd
-        ? socket_constant.CHAT_REACTION_RESULT
-        : socket_constant.CHAT_REACTION_REMOVE,
-      {
+      isAdd ?
+      socket_constant.CHAT_REACTION_RESULT :
+      socket_constant.CHAT_REACTION_REMOVE, {
         success: true,
         message: isAdd ? "reacted to message" : "reaction removed successfully",
         chatReactionResponse,
@@ -748,10 +861,16 @@ const notifyUpload = async (socket, data, updatedFileName) => {
   try {
     // Extract the filename from the provided 'data'
     const filename = updatedFileName;
-    const { groupId } = data;
+    const {
+      groupId
+    } = data;
     // Find the group based on its name and sort it by createdAt in descending order
-    await Group.findOne({ _id: groupId })
-      .sort({ createdAt: -1 })
+    await Group.findOne({
+        _id: groupId
+      })
+      .sort({
+        createdAt: -1
+      })
       .then(async (groups) => {
         // Get a list of online users in the group, including the sender
         const onlineUsers = getOnlineUsers(groupId, data.senderId);
@@ -759,7 +878,9 @@ const notifyUpload = async (socket, data, updatedFileName) => {
 
         // Define the message as "File Attached" or use the message from 'data'
         const msg = data.message || "File Attached";
-        const { socketUsers } = data;
+        const {
+          socketUsers
+        } = data;
         const readUserIds = [];
         // Iterate through online users and find those who are group members
         onlineUsers.forEach((ids) => {
@@ -768,8 +889,7 @@ const notifyUpload = async (socket, data, updatedFileName) => {
           }
         });
 
-        groups.groupMembers.forEach((userId) => {
-        })
+        groups.groupMembers.forEach((userId) => {})
         // update unreadMessage Count for each user in group in redis
         await setChatUnreadCount(groups.groupMembers, groupId, readUserIds);
         // Create a new chat message object for the uploaded file
