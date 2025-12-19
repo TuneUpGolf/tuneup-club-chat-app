@@ -325,7 +325,7 @@ exports.chatMessage = ({
             }
 
             const isOnline = onlineUsers.includes(userId);
-
+            console.log("test arslan");
             await fetch("https://tuneupclub.com/api/notify-message", {
               method: "POST",
               headers: {
